@@ -28,12 +28,12 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      overflow: hidden;
+      overflow-x: hidden;
       position: relative;
     }
 
     canvas#bgCanvas {
-      position: absolute;
+      position: fixed;
       top: 0; left: 0;
       width: 100%; height: 100%;
       z-index: 1;
@@ -44,8 +44,7 @@
       z-index: 2;
       width: 100%;
       max-width: 1180px;
-      height: 100vh;
-      max-height: 760px;
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
       padding: 10px;
@@ -74,11 +73,11 @@
 
     /* === TELA 0: REGISTO === */
     #screen-register {
-      width: 100%; height: 100%;
+      width: 100%; min-height: 90vh;
       display: flex; justify-content: center; align-items: center;
     }
     .register-card {
-      width: 90%; max-width: 420px; padding: 25px; text-align: center;
+      width: 100%; max-width: 420px; padding: 25px; text-align: center;
     }
     .register-card h1 { color: var(--orange-halloween); font-size: 22px; margin-bottom: 8px; }
     .input-field {
@@ -87,10 +86,10 @@
     }
 
     /* === TELA 1: MENU === */
-    #screen-menu { width: 100%; height: 100%; display: none; flex-direction: column; justify-content: space-between; gap: 10px; }
+    #screen-menu { width: 100%; min-height: 90vh; display: none; flex-direction: column; justify-content: space-between; gap: 15px; }
     .menu-header { text-align: center; padding: 5px; }
     .menu-header h1 { font-size: 26px; color: var(--orange-halloween); text-shadow: 0 0 10px #ff7518; }
-    .menu-body { display: flex; gap: 15px; flex: 1; overflow-y: auto; }
+    .menu-body { display: flex; gap: 15px; flex: 1; }
     .adventure-card { flex: 1.2; padding: 18px; display: flex; flex-direction: column; justify-content: space-between; }
     .levels-card { flex: 1; padding: 15px; display: flex; flex-direction: column; }
     .levels-list { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; overflow-y: auto; }
@@ -99,63 +98,65 @@
     .btn-level.locked { opacity: 0.4; border-color: #3D2446; background: #140A1A; }
 
     /* === TELA 2: JOGO RESPONSIVO === */
-    #screen-game { width: 100%; height: 100%; display: none; flex-direction: column; }
-    .header-bar { height: auto; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    #screen-game { width: 100%; display: none; flex-direction: column; gap: 12px; }
+    .header-bar { padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; }
     
-    .game-layout { display: flex; gap: 12px; flex: 1; min-height: 0; }
-    .col-panel { padding: 15px; display: flex; flex-direction: column; justify-content: space-between; }
+    .game-layout { display: flex; gap: 15px; width: 100%; }
+    .col-panel { padding: 15px; display: flex; flex-direction: column; justify-content: space-between; flex: 1; }
 
     /* ABAS MOBILE (OCULTAS NO PC) */
-    .mobile-tabs { display: none; gap: 5px; margin-bottom: 10px; }
-    .tab-btn { flex: 1; padding: 10px; background: #160B24; border: 1px solid var(--purple-border); color: #fff; border-radius: 8px; font-weight: bold; font-size: 12px; }
-    .tab-btn.active { background: var(--purple-border); color: var(--gold-yellow); }
+    .mobile-tabs { display: none; gap: 6px; width: 100%; }
+    .tab-btn { flex: 1; padding: 12px 5px; background: #160B24; border: 1px solid var(--purple-border); color: #fff; border-radius: 8px; font-weight: bold; font-size: 13px; text-align: center; }
+    .tab-btn.active { background: var(--purple-border); color: var(--gold-yellow); border-color: var(--gold-yellow); }
 
     .examples-box {
       background: #0D0618; border: 1px solid var(--purple-border); border-radius: 8px;
-      padding: 10px; font-family: 'Consolas', monospace; font-size: 13px; color: #E2D4FF;
-      flex: 1; white-space: pre-wrap; overflow-y: auto; line-height: 1.5; margin-bottom: 10px;
+      padding: 12px; font-family: 'Consolas', monospace; font-size: 13px; color: #E2D4FF;
+      min-height: 200px; max-height: 350px; white-space: pre-wrap; overflow-y: auto; line-height: 1.5; margin-bottom: 10px;
     }
 
     .result-display {
-      height: 55px; background: #0B0612; border: 1px solid var(--purple-border);
+      min-height: 55px; background: #0B0612; border: 1px solid var(--purple-border);
       border-radius: 6px; display: flex; justify-content: center; align-items: center;
-      font-weight: bold; font-size: 13px; color: #fff; text-align: center; margin: 10px 0;
+      font-weight: bold; font-size: 13px; color: #fff; text-align: center; margin: 10px 0; padding: 8px;
     }
 
     .bar-bg { width: 100%; height: 8px; background: #35152D; border-radius: 4px; overflow: hidden; margin-top: 3px; }
     .bar-fill { height: 100%; width: 100%; transition: width 0.3s; }
 
-    .inventory-container { display: flex; gap: 6px; margin: 8px 0; }
-    .btn-item { flex: 1; height: 40px; font-size: 12px; font-weight: bold; }
+    .inventory-container { display: flex; gap: 6px; margin: 10px 0; }
+    .btn-item { flex: 1; height: 44px; font-size: 13px; font-weight: bold; }
 
     .history-box {
       font-family: 'Consolas', monospace; font-size: 12px; color: var(--text-purple);
-      flex: 1; overflow-y: auto; white-space: pre-wrap; margin-top: 8px;
+      min-height: 140px; overflow-y: auto; white-space: pre-wrap; margin-top: 8px;
     }
 
-    /* VITÓRIA OVERLAY */
+    /* OVERLAY DE VITÓRIA */
     #victory-container {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      background: #1E0F33; border: 2px solid var(--orange-halloween); border-radius: 14px;
+      background: rgba(30, 15, 51, 0.95); border: 2px solid var(--orange-halloween); border-radius: 14px;
       display: none; flex-direction: column; justify-content: center; align-items: center;
       padding: 20px; text-align: center; z-index: 10;
     }
 
     #achievement-toast {
-      position: absolute; top: 15px; right: 15px; width: 280px; height: 55px;
+      position: fixed; top: 15px; right: 15px; width: 280px; height: 55px;
       background: #1E0F33; border: 2px solid var(--gold-yellow); border-radius: 10px;
       display: none; justify-content: center; align-items: center; text-align: center;
       color: var(--gold-yellow); font-weight: bold; font-size: 12px; z-index: 99;
     }
 
-    /* === OTIMIZAÇÃO PARA TELEMÓVEIS (ECRÃS PEQUENOS) === */
+    /* === REGRAS DE ADAPTAÇÃO TOTAL PARA TELEMÓVEIS === */
     @media (max-width: 850px) {
-      .app-container { height: 100vh; max-height: none; padding: 5px; }
+      body { overflow-y: auto; align-items: flex-start; }
+      .app-container { min-height: 100vh; height: auto; padding: 5px; }
       .menu-body { flex-direction: column; }
+      
       .mobile-tabs { display: flex; }
 
-      .game-layout { flex-direction: column; }
-      .col-panel { display: none; width: 100% !important; flex: 1; }
+      .game-layout { flex-direction: column; width: 100%; }
+      .col-panel { display: none; width: 100% !important; }
       .col-panel.mobile-active { display: flex !important; }
 
       .header-bar h1 { font-size: 16px !important; }
@@ -189,7 +190,7 @@
     <div id="screen-menu">
       <div class="menu-header">
         <h1>🎃 O CÓDIGO AMALDIÇOADO 🎃</h1>
-        <p style="font-size: 12px;">DESCUBLA A REGRA SECRETA DAS PALAVRAS!</p>
+        <p style="font-size: 12px;">DESCOBRE A REGRA SECRETA DAS PALAVRAS!</p>
       </div>
 
       <div class="menu-body">
@@ -234,22 +235,22 @@
 
       <!-- SEPARADORES/ABAS APENAS PARA TELEMÓVEIS -->
       <div class="mobile-tabs">
-        <button class="tab-btn active" onclick="switchMobileTab('col-left', this)">📜 PISTAS</button>
-        <button class="tab-btn" onclick="switchMobileTab('col-center', this)">🧪 TESTAR</button>
+        <button class="tab-btn" onclick="switchMobileTab('col-left', this)">📜 PISTAS</button>
+        <button class="tab-btn active" onclick="switchMobileTab('col-center', this)">🧪 TESTAR</button>
         <button class="tab-btn" onclick="switchMobileTab('col-right', this)">🏆 PLACAR</button>
       </div>
 
       <!-- LAYOUT PRINCIPAL -->
       <div class="game-layout">
         <!-- COLUNA 1: PISTAS -->
-        <div id="col-left" class="gothic-panel col-panel mobile-active" style="width: 30%;">
+        <div id="col-left" class="gothic-panel col-panel">
           <h3 style="color: var(--orange-halloween); font-size: 14px; margin-bottom: 6px;">📜 EXEMPLOS DE PISTAS</h3>
           <div id="game-examples-box" class="examples-box"></div>
           <button id="btn-hint" class="btn-gothic" style="height: 42px; color: var(--gold-yellow); border-color: var(--gold-yellow); background: #3C096C; font-size: 12px;">💡 Dica (-15 pts)</button>
         </div>
 
-        <!-- COLUNA 2: TESTAR -->
-        <div id="col-center" class="gothic-panel col-panel" style="width: 38%; position: relative;">
+        <!-- COLUNA 2: TESTAR (INICIA ATIVA NO TELEMÓVEL) -->
+        <div id="col-center" class="gothic-panel col-panel mobile-active" style="position: relative;">
           <h3 style="color: var(--purple-bright); font-size: 14px; margin-bottom: 6px;">🧪 Testar uma Palavra</h3>
           <input type="text" id="txt-word" class="input-field" style="text-align: left;" placeholder="Escreve uma palavra...">
           <button id="btn-test-word" class="btn-gothic" style="height: 44px; background: var(--purple-border); color: #fff; font-size: 14px;">⚡ Testar Entradas</button>
@@ -268,7 +269,7 @@
         </div>
 
         <!-- COLUNA 3: PLACAR -->
-        <div id="col-right" class="gothic-panel col-panel" style="width: 32%;">
+        <div id="col-right" class="gothic-panel col-panel">
           <h3 style="color: var(--purple-bright); font-size: 14px;">🏆 PLACAR & INVENTÁRIO</h3>
           
           <div style="font-size: 13px; font-weight: bold; color: var(--orange-halloween);" id="lbl-points">Pontos: 0</div>
