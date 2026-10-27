@@ -95,7 +95,7 @@
     .levels-list { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; overflow-y: auto; }
     .btn-level { padding: 12px; font-size: 13px; text-align: center; }
     .btn-level.selected { border: 2px solid var(--orange-halloween); background: #7B2CBF; }
-    .btn-level.locked { opacity: 0.4; border-color: #3D2446; background: #140A1A; }
+    .btn-level.locked { opacity: 0.4; border-color: #3D2446; background: #140A1A; cursor: not-allowed; }
 
     /* === TELA 2: JOGO RESPONSIVO === */
     #screen-game { width: 100%; display: none; flex-direction: column; gap: 12px; }
@@ -135,7 +135,7 @@
     /* OVERLAY DE VITÓRIA */
     #victory-container {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(30, 15, 51, 0.95); border: 2px solid var(--orange-halloween); border-radius: 14px;
+      background: rgba(30, 15, 51, 0.96); border: 2px solid var(--orange-halloween); border-radius: 14px;
       display: none; flex-direction: column; justify-content: center; align-items: center;
       padding: 20px; text-align: center; z-index: 10;
     }
@@ -249,7 +249,7 @@
           <button id="btn-hint" class="btn-gothic" style="height: 42px; color: var(--gold-yellow); border-color: var(--gold-yellow); background: #3C096C; font-size: 12px;">💡 Dica (-15 pts)</button>
         </div>
 
-        <!-- COLUNA 2: TESTAR (INICIA ATIVA NO TELEMÓVEL) -->
+        <!-- COLUNA 2: TESTAR -->
         <div id="col-center" class="gothic-panel col-panel mobile-active" style="position: relative;">
           <h3 style="color: var(--purple-bright); font-size: 14px; margin-bottom: 6px;">🧪 Testar uma Palavra</h3>
           <input type="text" id="txt-word" class="input-field" style="text-align: left;" placeholder="Escreve uma palavra...">
@@ -261,10 +261,10 @@
           <input type="text" id="txt-rule" class="input-field" style="text-align: left;" placeholder="Escreve o segredo...">
           <button id="btn-guess-rule" class="btn-gothic" style="height: 44px; color: var(--orange-halloween); border-color: var(--purple-bright); font-size: 14px;">🎃 Revelar o Segredo</button>
 
-          <!-- OVERLAY DE VITÓRIA -->
+          <!-- OVERLAY DE VITÓRIA / DERROTA -->
           <div id="victory-container">
             <h2 id="victory-text" style="color: var(--orange-halloween); font-size: 15px; line-height: 1.5; white-space: pre-wrap;"></h2>
-            <button id="btn-next-action" class="btn-gothic btn-orange" style="width: 80%; height: 48px; font-size: 14px; margin-top: 15px;">▶️ PRÓXIMO DESAFIO</button>
+            <button id="btn-next-action" class="btn-gothic btn-orange" style="width: 85%; height: 48px; font-size: 14px; margin-top: 15px;">▶️ PRÓXIMO DESAFIO</button>
           </div>
         </div>
 
@@ -299,7 +299,6 @@
   </div>
 
   <script>
-    // MUDANÇA DE ABAS NO TELEMÓVEL
     function switchMobileTab(tabId, btn) {
       document.querySelectorAll('.col-panel').forEach(p => p.classList.remove('mobile-active'));
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -307,7 +306,6 @@
       btn.classList.add('active');
     }
 
-    // ESTADO E REGRAS COMPLETAS (C#)
     let player = { name: "", userClass: "", points: 0, wins: 0, bestScore: 0 };
     let currentLevel = 1;
     let unlockedLevel = 1;
@@ -324,6 +322,7 @@
     let timerInterval = null;
     let ruleDiscovered = false;
     let soundEnabled = true;
+    let nextActionTarget = "next_challenge"; 
 
     let examplesCount = 4;
     let bossShieldHits = 0;
@@ -447,12 +446,18 @@
       alert("📜 COMO JOGAR:\n\n1. Testa palavras para ver se são aceitas.\n2. Palavras repetidas ou dos exemplos são proibidas!\n3. Descobre a regra secreta que junta todas as palavras válidas.\n4. O 3º desafio é contra o CHEFE (sem tempo limite)!");
     });
 
-    document.getElementById('btn-play-menu').addEventListener('click', startMatch);
+    document.getElementById('btn-play-menu').addEventListener('click', () => {
+      if (solvedCount[currentLevel] >= 3) {
+        if (currentLevel < 5) currentLevel++;
+      }
+      startMatch();
+    });
 
     document.getElementById('btn-back-menu').addEventListener('click', () => {
       clearInterval(timerInterval);
       document.getElementById('screen-game').style.display = 'none';
       document.getElementById('screen-menu').style.display = 'flex';
+      renderMenuLevels();
       updateMenuRecords();
     });
 
@@ -465,12 +470,14 @@
       const list = document.getElementById('menu-levels-list');
       list.innerHTML = '';
       for (let l = 1; l <= 5; l++) {
-        let isUnlocked = l === 1 || solvedCount[l - 1] >= 3;
+        let isUnlocked = (l === 1) || (unlockedLevel >= l) || (solvedCount[l - 1] >= 3);
         let btn = document.createElement('button');
         btn.className = `btn-gothic btn-level ${l === currentLevel ? 'selected' : ''} ${isUnlocked ? '' : 'locked'}`;
+        
+        let count = solvedCount[l] || 0;
         btn.innerHTML = isUnlocked 
-          ? `${l === currentLevel ? '▶ ' : ''}NÍVEL ${l} • ${getLevelName(l)} (${solvedCount[l]}/3)`
-          : `🔒 NÍVEL ${l} BLOQUEADO (${Math.max(0, 3 - solvedCount[l-1])}/3)`;
+          ? `${l === currentLevel ? '▶ ' : ''}NÍVEL ${l} • ${getLevelName(l)} (${count}/3)`
+          : `🔒 NÍVEL ${l} BLOQUEADO`;
 
         if (isUnlocked) {
           btn.onclick = () => {
@@ -504,7 +511,7 @@
 
     function selectNextRule() {
       let levelRules = rulesDB.filter(r => r.level === currentLevel);
-      let solvedInLevel = solvedCount[currentLevel];
+      let solvedInLevel = solvedCount[currentLevel] || 0;
 
       if (solvedInLevel >= 2) {
         currentRule = levelRules.find(r => r.boss) || levelRules[levelRules.length - 1];
@@ -657,10 +664,13 @@
       if (hits && !forbids) {
         clearInterval(timerInterval); ruleDiscovered = true; matchPoints += 50;
         completedChallengeIds.add(currentRule.id); player.wins++; player.bestScore = Math.max(player.bestScore, matchPoints);
-        solvedCount[currentLevel]++;
+        
+        solvedCount[currentLevel] = (solvedCount[currentLevel] || 0) + 1;
 
         let isLevelComplete = solvedCount[currentLevel] >= 3;
-        if (isLevelComplete && currentLevel < 5) unlockedLevel = Math.max(unlockedLevel, currentLevel + 1);
+        if (isLevelComplete && currentLevel < 5) {
+          unlockedLevel = Math.max(unlockedLevel, currentLevel + 1);
+        }
 
         unlockAchievement("primeira_vitoria");
         if (player.wins >= 5) unlockAchievement("mestre_cacador");
@@ -668,15 +678,25 @@
         if (matchLives === 1) unlockAchievement("vida_limite");
         if (!currentRule.boss && MAX_TIME - timeRemaining <= 30) unlockAchievement("rapido");
         if (hintsUsed === 0) unlockAchievement("sem_dicas");
+        if (currentLevel === 5 && isLevelComplete) unlockAchievement("mestre_supremo");
 
         playSound('win');
-        showVictoryScreen(true, `🎃 MISTÉRIO RESOLVIDO! 🎃\n\n${currentRule.title}\n\nPontos: ${matchPoints} pts`);
+
+        if (isLevelComplete) {
+          nextActionTarget = "menu";
+          showVictoryScreen(true, `👑 CHEFE DERROTADO! NÍVEL ${currentLevel} CONCLUÍDO! 👑\n\nDesbloqueaste o Nível ${Math.min(5, currentLevel + 1)}!\n\nPontos: ${matchPoints} pts`);
+        } else {
+          nextActionTarget = "next_challenge";
+          showVictoryScreen(true, `🎃 MISTÉRIO RESOLVIDO! 🎃\n\n${currentRule.title}\n\nPontos: ${matchPoints} pts`);
+        }
+
       } else {
         matchPoints = Math.max(0, matchPoints - 15); matchAttempts++; matchLives = Math.max(0, matchLives - 1);
         playSound('error');
 
         if (matchLives === 0) {
           clearInterval(timerInterval); ruleDiscovered = true;
+          nextActionTarget = "retry";
           showVictoryScreen(false, `💀 FIM DO JOGO 💀\n\nFicaste sem vidas!\n\nA regra era: ${currentRule.title}`);
         } else {
           let res = document.getElementById('game-result-box');
@@ -693,13 +713,29 @@
       let btn = document.getElementById('btn-next-action');
 
       text.innerText = msg;
-      btn.innerText = success ? "▶️ PRÓXIMO DESAFIO" : "🔄 Tentar Novamente";
+      
+      if (nextActionTarget === "menu") {
+        btn.innerText = "🎉 NÍVEL CONCLUÍDO! IR PARA O MENU";
+      } else if (nextActionTarget === "retry") {
+        btn.innerText = "🔄 Tentar Novamente";
+      } else {
+        btn.innerText = "▶️ PRÓXIMO DESAFIO";
+      }
+
       container.style.display = 'flex';
     }
 
     document.getElementById('btn-next-action').addEventListener('click', () => {
       document.getElementById('victory-container').style.display = 'none';
-      startMatch();
+      if (nextActionTarget === "menu") {
+        if (currentLevel < 5) currentLevel++;
+        document.getElementById('screen-game').style.display = 'none';
+        document.getElementById('screen-menu').style.display = 'flex';
+        renderMenuLevels();
+        updateMenuRecords();
+      } else {
+        startMatch();
+      }
     });
 
     document.getElementById('btn-hint').addEventListener('click', () => {
