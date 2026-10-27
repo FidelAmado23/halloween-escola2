@@ -132,13 +132,30 @@
       min-height: 140px; overflow-y: auto; white-space: pre-wrap; margin-top: 8px;
     }
 
-    /* OVERLAY DE VITÓRIA / DERROTA */
-    #victory-container {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(30, 15, 51, 0.96); border: 2px solid var(--orange-halloween); border-radius: 14px;
+    /* OVERLAYS / POPUPS */
+    #victory-container, #ranking-modal {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(9, 5, 18, 0.95);
       display: none; flex-direction: column; justify-content: center; align-items: center;
-      padding: 20px; text-align: center; z-index: 10;
+      padding: 20px; z-index: 100;
     }
+
+    .ranking-card {
+      width: 100%; max-width: 500px; max-height: 80vh; padding: 20px;
+      display: flex; flex-direction: column; gap: 15px; text-align: center;
+    }
+
+    .ranking-table-box {
+      overflow-y: auto; max-height: 300px; border: 1px solid var(--purple-border); border-radius: 8px; background: #0D0618;
+    }
+
+    table.ranking-table {
+      width: 100%; border-collapse: collapse; font-size: 13px; text-align: left;
+    }
+    table.ranking-table th, table.ranking-table td {
+      padding: 10px; border-bottom: 1px solid #241438;
+    }
+    table.ranking-table th { background: var(--purple-dark); color: var(--gold-yellow); position: sticky; top: 0; }
 
     #achievement-toast {
       position: fixed; top: 15px; right: 15px; width: 280px; height: 55px;
@@ -190,7 +207,7 @@
     <div id="screen-menu">
       <div class="menu-header">
         <h1>🎃 O CÓDIGO AMALDIÇOADO 🎃</h1>
-        <p style="font-size: 12px;">DESCOBRE A REGRA SECRETA DAS PALAVRAS!</p>
+        <p style="font-size: 12px;" id="lbl-welcome-player">DESCOBRE A REGRA SECRETA DAS PALAVRAS!</p>
       </div>
 
       <div class="menu-body">
@@ -203,9 +220,10 @@
               Palavras repetidas ou dos exemplos são proibidas!
             </p>
           </div>
-          <div style="display: flex; gap: 8px; margin-top: 15px;">
-            <button id="btn-play-menu" class="btn-gothic btn-orange" style="flex: 2; height: 48px; font-size: 14px;">▶ JOGAR</button>
-            <button id="btn-how-to-play" class="btn-gothic" style="flex: 1; height: 48px; font-size: 12px;">? COMO JOGAR</button>
+          <div style="display: flex; gap: 8px; margin-top: 15px; flex-wrap: wrap;">
+            <button id="btn-play-menu" class="btn-gothic btn-orange" style="flex: 2; height: 48px; font-size: 14px; min-width: 120px;">▶ JOGAR</button>
+            <button id="btn-show-ranking" class="btn-gothic" style="flex: 1; height: 48px; font-size: 12px; color: var(--gold-yellow); border-color: var(--gold-yellow); min-width: 100px;">📊 RANKING</button>
+            <button id="btn-how-to-play" class="btn-gothic" style="flex: 1; height: 48px; font-size: 12px; min-width: 100px;">? REGRAS</button>
           </div>
         </div>
 
@@ -215,8 +233,9 @@
         </div>
       </div>
 
-      <div class="gothic-panel" style="padding: 10px; text-align: center; font-size: 12px; font-weight: bold;">
+      <div class="gothic-panel" style="padding: 10px; text-align: center; font-size: 12px; font-weight: bold; display: flex; justify-content: space-between; align-items: center;">
         <span id="menu-records-text">🏆 RECORDE: 0 PTS • 👻 VITÓRIAS: 0</span>
+        <button id="btn-switch-user" class="btn-gothic" style="padding: 4px 8px; font-size: 11px;">👤 Trocar Jogador</button>
       </div>
     </div>
 
@@ -296,6 +315,30 @@
       </div>
     </div>
 
+    <!-- TELA 3: MODAL DE RANKING / PLACAR -->
+    <div id="ranking-modal">
+      <div class="gothic-panel ranking-card">
+        <h2 style="color: var(--gold-yellow);">🏆 RANKING DOS CAÇADORES</h2>
+        <div class="ranking-table-box">
+          <table class="ranking-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Nome</th>
+                <th>Turma</th>
+                <th>Pontos</th>
+                <th>Vitórias</th>
+              </tr>
+            </thead>
+            <tbody id="ranking-table-body">
+              <!-- Preenchido por JS -->
+            </tbody>
+          </table>
+        </div>
+        <button id="btn-close-ranking" class="btn-gothic btn-orange" style="height: 42px; font-size: 14px;">FECHAR</button>
+      </div>
+    </div>
+
   </div>
 
   <script>
@@ -306,7 +349,64 @@
       btn.classList.add('active');
     }
 
+    // GESTÃO DE LOCALSTORAGE E RANKING
     let player = { name: "", userClass: "", points: 0, wins: 0, bestScore: 0 };
+    let rankingData = [];
+
+    function loadSavedPlayer() {
+      let saved = localStorage.getItem('halloween_current_player');
+      if (saved) {
+        player = JSON.parse(saved);
+        document.getElementById('reg-name').value = player.name;
+        document.getElementById('reg-class').value = player.userClass;
+      }
+      let savedRanking = localStorage.getItem('halloween_ranking');
+      if (savedRanking) {
+        rankingData = JSON.parse(savedRanking);
+      }
+    }
+
+    function savePlayerData() {
+      localStorage.setItem('halloween_current_player', JSON.stringify(player));
+      
+      let existingIndex = rankingData.findIndex(p => p.name.toLowerCase() === player.name.toLowerCase() && p.userClass.toLowerCase() === player.userClass.toLowerCase());
+      if (existingIndex >= 0) {
+        rankingData[existingIndex].bestScore = Math.max(rankingData[existingIndex].bestScore, player.bestScore);
+        rankingData[existingIndex].wins = Math.max(rankingData[existingIndex].wins, player.wins);
+      } else {
+        rankingData.push({
+          name: player.name,
+          userClass: player.userClass,
+          bestScore: player.bestScore,
+          wins: player.wins
+        });
+      }
+      
+      rankingData.sort((a, b) => b.bestScore - a.bestScore || b.wins - a.wins);
+      localStorage.setItem('halloween_ranking', JSON.stringify(rankingData));
+    }
+
+    function renderRankingTable() {
+      let tbody = document.getElementById('ranking-table-body');
+      tbody.innerHTML = '';
+      if (rankingData.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:15px;">Nenhum caçador registado ainda!</td></tr>';
+        return;
+      }
+      rankingData.forEach((p, idx) => {
+        let tr = document.createElement('tr');
+        if (p.name.toLowerCase() === player.name.toLowerCase()) tr.style.background = '#3C096C';
+        tr.innerHTML = `
+          <td><strong>${idx + 1}º</strong></td>
+          <td>${p.name}</td>
+          <td>${p.userClass}</td>
+          <td style="color:var(--gold-yellow); font-weight:bold;">${p.bestScore}</td>
+          <td>👻 ${p.wins}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
     let currentLevel = 1;
     let unlockedLevel = 1;
     let solvedCount = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
@@ -429,6 +529,7 @@
     window.addEventListener('resize', initCanvas);
     initCanvas();
     drawCanvas();
+    loadSavedPlayer();
 
     // INTERFACE
     document.getElementById('form-login').addEventListener('submit', e => {
@@ -436,10 +537,33 @@
       player.name = document.getElementById('reg-name').value.trim();
       player.userClass = document.getElementById('reg-class').value.trim();
       
+      let existing = rankingData.find(p => p.name.toLowerCase() === player.name.toLowerCase() && p.userClass.toLowerCase() === player.userClass.toLowerCase());
+      if (existing) {
+        player.bestScore = existing.bestScore;
+        player.wins = existing.wins;
+      }
+
+      savePlayerData();
+
       document.getElementById('screen-register').style.display = 'none';
       document.getElementById('screen-menu').style.display = 'flex';
+      document.getElementById('lbl-welcome-player').innerText = `BEM-VINDO(A), CAÇADOR(A) ${player.name.toUpperCase()} (${player.userClass})!`;
       renderMenuLevels();
       updateMenuRecords();
+    });
+
+    document.getElementById('btn-switch-user').addEventListener('click', () => {
+      document.getElementById('screen-menu').style.display = 'none';
+      document.getElementById('screen-register').style.display = 'flex';
+    });
+
+    document.getElementById('btn-show-ranking').addEventListener('click', () => {
+      renderRankingTable();
+      document.getElementById('ranking-modal').style.display = 'flex';
+    });
+
+    document.getElementById('btn-close-ranking').addEventListener('click', () => {
+      document.getElementById('ranking-modal').style.display = 'none';
     });
 
     document.getElementById('btn-how-to-play').addEventListener('click', () => {
@@ -663,8 +787,11 @@
 
       if (hits && !forbids) {
         clearInterval(timerInterval); ruleDiscovered = true; matchPoints += 50;
-        completedChallengeIds.add(currentRule.id); player.wins++; player.bestScore = Math.max(player.bestScore, matchPoints);
+        completedChallengeIds.add(currentRule.id); player.wins++; 
+        player.bestScore = Math.max(player.bestScore, matchPoints);
         
+        savePlayerData();
+
         solvedCount[currentLevel] = (solvedCount[currentLevel] || 0) + 1;
 
         let isLevelComplete = solvedCount[currentLevel] >= 3;
