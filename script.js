@@ -1,295 +1,188 @@
-// --- ESTADO GLOBAL & REGISTO ---
-let currentUser = null;
-let currentLevel = 1;
-let levelProgress = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-let currentRule = null;
-let points = 0;
-let lives = 5;
-let attempts = 0;
-let timeRemaining = 180;
-let timerInterval = null;
-let testedWords = new Set();
-let solvedRules = new Set();
-let bossShieldHits = 0;
-
-// Reutilizamos a lógica completa de regras de jogo
-const rulesDatabase = [
-  // Nível 1
-  { id: 'n1_tunel', level: 1, title: '👻 Túnel Invisível', validate: p => /[áéíóúàâêôãõ]/i.test(p), keys: ['acent', 'til'], forbidden: ['sem'], boss: false, hint: 'Observa os acentos nas letras.' },
-  { id: 'n1_caldeirao', level: 1, title: '🧙‍♀️ Caldeirão da Bruxa', validate: p => /^[aeiouáéíóúãõâêô]/i.test(p), keys: ['vogal', 'começa'], forbidden: ['consoante'], boss: false, hint: 'Começa por A, E, I, O ou U?' },
-  { id: 'n1_gargula', level: 1, title: '👑 CHEFE: A Gárgula Guardiã 🗿', validate: p => p.length % 2 === 0, keys: ['par', 'pares'], forbidden: ['ímpar'], boss: true, shield: 2, hint: 'Conta a quantidade de letras.' },
-
-  // Nível 2
-  { id: 'n2_uivo', level: 2, title: '🐺 O Uivo do Lobisomem', validate: p => /o$/i.test(p), keys: ['termina com o', 'fim o'], forbidden: ['começa'], boss: false, hint: 'Olha para a última letra.' },
-  { id: 'n2_livro', level: 2, title: '📜 O Livro de Feitiços', validate: p => p.length >= 7, keys: ['7 letras', 'comprida', 'longa'], forbidden: ['curta'], boss: false, hint: 'Qual é o tamanho da palavra?' },
-  { id: 'n2_abobora', level: 2, title: '👑 CHEFE: Rei Abóbora 🎃', validate: p => p.length > 5 && /o/i.test(p), keys: ['letra o', 'mais de 5'], forbidden: ['curta'], boss: true, shield: 2, hint: 'Mais de 5 letras + a letra O.' },
-
-  // Níveis 3 a 5 podem ser expandidos da mesma forma...
-];
-
-// EXEMPLOS BASE PARA CADA REGRA
-const examplesDB = {
-  'n1_tunel': ["Avião -> Passa", "Mota -> Não Passa", "Abóbora -> Passa", "Vampiro -> Não Passa"],
-  'n1_caldeirao': ["Aranha -> Passa", "Morcego -> Não Passa", "Esqueleto -> Passa", "Zumbi -> Não Passa"],
-  'n1_gargula': ["Gato -> Passa", "Bruxa -> Não Passa", "Lobo -> Passa", "Lua -> Não Passa"],
-  'n2_uivo': ["Monstro -> Passa", "Bruxa -> Não Passa", "Vampiro -> Passa", "Luz -> Não Passa"],
-  'n2_livro': ["Cemitério -> Passa", "Lobo -> Não Passa", "Assombração -> Passa", "Gato -> Não Passa"],
-  'n2_abobora': ["Abóbora -> Passa", "Melão -> Não Passa", "Castelo -> Passa", "Dia -> Não Passa"]
-};
-
-// --- RENDERIZAR E NAVEGAÇÃO ---
-document.addEventListener('DOMContentLoaded', () => {
-  // Carregar utilizador guardado
-  const savedUser = localStorage.getItem('halloween_user');
-  if (savedUser) {
-    currentUser = JSON.parse(savedUser);
-    showScreen('screen-levels');
-    updateLevelMenu();
-  }
-
-  // Evento de Formulário de Registo
-  document.getElementById('form-register').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const name = document.getElementById('username').value.trim();
-    const userClass = document.getElementById('userclass').value.trim();
-
-    currentUser = { name, userClass, maxScore: 0 };
-    localStorage.setItem('halloween_user', JSON.stringify(currentUser));
-
-    showScreen('screen-levels');
-    updateLevelMenu();
-  });
-
-  document.getElementById('btn-show-ranking').addEventListener('click', showRanking);
-  document.getElementById('btn-close-ranking').addEventListener('click', () => {
-    document.getElementById('modal-ranking').classList.remove('active');
-  });
-  document.getElementById('btn-back-menu').addEventListener('click', () => {
-    clearInterval(timerInterval);
-    showScreen('screen-levels');
-  });
-
-  document.getElementById('btn-test-word').addEventListener('click', testWord);
-  document.getElementById('btn-guess-rule').addEventListener('click', guessRule);
-  document.getElementById('btn-next-action').addEventListener('click', nextAction);
-  document.getElementById('btn-hint').addEventListener('click', getHint);
-});
-
-function showScreen(screenId) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(screenId).classList.add('active');
+:root {
+  --bg-main: #090512;
+  --panel-bg: #160B24;
+  --purple-border: #7B2CBF;
+  --purple-dark: #3C096C;
+  --purple-bright: #9D4EDD;
+  --orange-halloween: #FF7518;
+  --gold-yellow: #FFD700;
+  --green-success: #39FF14;
+  --red-danger: #FF3131;
+  --pink-life: #FF3B6B;
+  --text-purple: #D8C7FF;
 }
 
-function updateLevelMenu() {
-  document.getElementById('welcome-user').innerText = `Olá, ${currentUser.name} (${currentUser.userClass})!`;
-  document.getElementById('user-stats-summary').innerText = `Pontuação Máxima: ${currentUser.maxScore} pts`;
-
-  const container = document.getElementById('levels-container');
-  container.innerHTML = '';
-
-  for (let l = 1; l <= 5; l++) {
-    const isUnlocked = l === 1 || levelProgress[l - 1] >= 3;
-    const btn = document.createElement('button');
-    btn.className = `btn-level ${isUnlocked ? '' : 'locked'}`;
-    btn.innerHTML = `<strong>Nível ${l}</strong><br>${isUnlocked ? `${levelProgress[l]}/3 Concluído` : '🔒 Bloqueado'}`;
-    if (isUnlocked) {
-      btn.onclick = () => startLevel(l);
-    }
-    container.appendChild(btn);
-  }
+* { 
+  box-sizing: border-box; 
+  margin: 0; 
+  padding: 0; 
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+  user-select: none; 
 }
 
-// --- LÓGICA DO JOGO ---
-function startLevel(level) {
-  currentLevel = level;
-  const availableRules = rulesDatabase.filter(r => r.level === level && !solvedRules.has(r.id));
+body {
+  background-color: var(--bg-main);
+  color: var(--text-purple);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow-x: hidden;
+  position: relative;
+}
 
-  if (availableRules.length === 0) {
-    alert("Parabéns! Concluíste todos os desafios deste nível.");
-    return;
-  }
+canvas#bgCanvas {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 1;
+}
 
-  // O 3º desafio é o Chefe
-  if (levelProgress[level] >= 2) {
-    currentRule = availableRules.find(r => r.boss) || availableRules[0];
-  } else {
-    const normalRules = availableRules.filter(r => !r.boss);
-    currentRule = normalRules[Math.floor(Math.random() * normalRules.length)] || availableRules[0];
-  }
+.app-container {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 1180px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+}
 
-  // Reset do estado da partida
-  points = 0;
-  lives = 5;
-  attempts = 0;
-  timeRemaining = 180;
-  testedWords.clear();
-  bossShieldHits = 0;
+/* === PAINÉIS E ELEMENTOS BASE === */
+.gothic-panel {
+  background: var(--panel-bg);
+  border: 2px solid var(--purple-border);
+  border-radius: 14px;
+  box-shadow: 0 0 15px rgba(123, 44, 191, 0.4);
+  position: relative;
+}
 
-  document.getElementById('game-title').innerText = currentRule.title;
-  document.getElementById('test-result').innerText = "Testa uma palavra para ver o resultado...";
-  document.getElementById('list-history').innerHTML = '';
+.btn-gothic {
+  background: #241438;
+  color: #fff;
+  border: 1px solid var(--purple-bright);
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+.btn-gothic:active { transform: scale(0.96); }
+.btn-orange { background: var(--orange-halloween); color: #16091D; border: none; }
+
+/* === TELA 0: REGISTO === */
+#screen-register {
+  width: 100%; min-height: 90vh;
+  display: flex; justify-content: center; align-items: center;
+}
+.register-card {
+  width: 100%; max-width: 420px; padding: 25px; text-align: center;
+}
+.register-card h1 { color: var(--orange-halloween); font-size: 22px; margin-bottom: 8px; }
+.input-field {
+  width: 100%; padding: 14px; margin-bottom: 12px; border-radius: 8px;
+  border: 1px solid var(--purple-border); background: #0B0612; color: #fff; font-size: 16px; text-align: center;
+}
+
+/* === TELA 1: MENU === */
+#screen-menu { width: 100%; min-height: 90vh; display: none; flex-direction: column; justify-content: space-between; gap: 15px; }
+.menu-header { text-align: center; padding: 5px; }
+.menu-header h1 { font-size: 26px; color: var(--orange-halloween); text-shadow: 0 0 10px #ff7518; }
+.menu-body { display: flex; gap: 15px; flex: 1; }
+.adventure-card { flex: 1.2; padding: 18px; display: flex; flex-direction: column; justify-content: space-between; }
+.levels-card { flex: 1; padding: 15px; display: flex; flex-direction: column; }
+.ranking-side-card { flex: 1.1; padding: 15px; display: flex; flex-direction: column; }
+
+.levels-list { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; overflow-y: auto; }
+.btn-level { padding: 12px; font-size: 13px; text-align: center; }
+.btn-level.selected { border: 2px solid var(--orange-halloween); background: #7B2CBF; }
+.btn-level.locked { opacity: 0.4; border-color: #3D2446; background: #140A1A; cursor: not-allowed; }
+
+/* === TELA 2: JOGO RESPONSIVO === */
+#screen-game { width: 100%; display: none; flex-direction: column; gap: 12px; }
+.header-bar { padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; }
+
+.game-layout { display: flex; gap: 15px; width: 100%; }
+.col-panel { padding: 15px; display: flex; flex-direction: column; justify-content: space-between; flex: 1; }
+
+/* ABAS MOBILE (OCULTAS NO PC) */
+.mobile-tabs { display: none; gap: 6px; width: 100%; }
+.tab-btn { flex: 1; padding: 12px 5px; background: #160B24; border: 1px solid var(--purple-border); color: #fff; border-radius: 8px; font-weight: bold; font-size: 13px; text-align: center; }
+.tab-btn.active { background: var(--purple-border); color: var(--gold-yellow); border-color: var(--gold-yellow); }
+
+.examples-box {
+  background: #0D0618; border: 1px solid var(--purple-border); border-radius: 8px;
+  padding: 12px; font-family: 'Consolas', monospace; font-size: 13px; color: #E2D4FF;
+  min-height: 200px; max-height: 350px; white-space: pre-wrap; overflow-y: auto; line-height: 1.5; margin-bottom: 10px;
+}
+
+.result-display {
+  min-height: 55px; background: #0B0612; border: 1px solid var(--purple-border);
+  border-radius: 6px; display: flex; justify-content: center; align-items: center;
+  font-weight: bold; font-size: 13px; color: #fff; text-align: center; margin: 10px 0; padding: 8px;
+}
+
+.bar-bg { width: 100%; height: 8px; background: #35152D; border-radius: 4px; overflow: hidden; margin-top: 3px; }
+.bar-fill { height: 100%; width: 100%; transition: width 0.3s; }
+
+.inventory-container { display: flex; gap: 6px; margin: 10px 0; }
+.btn-item { flex: 1; height: 44px; font-size: 13px; font-weight: bold; }
+
+.history-box {
+  font-family: 'Consolas', monospace; font-size: 12px; color: var(--text-purple);
+  min-height: 140px; overflow-y: auto; white-space: pre-wrap; margin-top: 8px;
+}
+
+/* OVERLAYS / POPUPS */
+#victory-container, #ranking-modal {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(9, 5, 18, 0.95);
+  display: none; flex-direction: column; justify-content: center; align-items: center;
+  padding: 20px; z-index: 100;
+}
+
+.ranking-card {
+  width: 100%; max-width: 580px; max-height: 85vh; padding: 20px;
+  display: flex; flex-direction: column; gap: 15px; text-align: center;
+}
+
+.ranking-table-box {
+  overflow-y: auto; max-height: 300px; border: 1px solid var(--purple-border); border-radius: 8px; background: #0D0618;
+}
+
+table.ranking-table {
+  width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;
+}
+table.ranking-table th, table.ranking-table td {
+  padding: 8px 10px; border-bottom: 1px solid #241438;
+}
+table.ranking-table th { background: var(--purple-dark); color: var(--gold-yellow); position: sticky; top: 0; z-index: 2; }
+
+.btn-delete-row {
+  background: none; border: none; color: var(--red-danger); cursor: pointer; font-size: 14px; padding: 2px 6px; border-radius: 4px;
+}
+.btn-delete-row:hover { background: rgba(255, 49, 49, 0.2); }
+
+#achievement-toast {
+  position: fixed; top: 15px; right: 15px; width: 280px; height: 55px;
+  background: #1E0F33; border: 2px solid var(--gold-yellow); border-radius: 10px;
+  display: none; justify-content: center; align-items: center; text-align: center;
+  color: var(--gold-yellow); font-weight: bold; font-size: 12px; z-index: 99;
+}
+
+/* === ADAPTAÇÃO TELEMÓVEIS === */
+@media (max-width: 850px) {
+  body { overflow-y: auto; align-items: flex-start; }
+  .app-container { min-height: 100vh; height: auto; padding: 5px; }
+  .menu-body { flex-direction: column; }
   
-  renderExamples();
-  updateUI();
-  showScreen('screen-game');
+  .mobile-tabs { display: flex; }
 
-  clearInterval(timerInterval);
-  if (currentRule.boss) {
-    document.getElementById('game-timer').innerText = "⏳ ♾️ Sem Limite";
-    document.getElementById('boss-shield').style.display = "block";
-  } else {
-    document.getElementById('boss-shield').style.display = "none";
-    timerInterval = setInterval(() => {
-      timeRemaining--;
-      document.getElementById('game-timer').innerText = `⏳ ${timeRemaining}s`;
-      if (timeRemaining <= 0) {
-        clearInterval(timerInterval);
-        alert("⏳ O tempo acabou!");
-        showScreen('screen-levels');
-      }
-    }, 1000);
-  }
-}
+  .game-layout { flex-direction: column; width: 100%; }
+  .col-panel { display: none; width: 100% !important; }
+  .col-panel.mobile-active { display: flex !important; }
 
-function renderExamples() {
-  const list = document.getElementById('list-examples');
-  list.innerHTML = '';
-  const examples = examplesDB[currentRule.id] || [];
-  examples.forEach(ex => {
-    const li = document.createElement('li');
-    li.innerText = ex;
-    list.appendChild(li);
-  });
-}
-
-function testWord() {
-  const input = document.getElementById('input-word');
-  const word = input.value.trim();
-
-  if (!word) return;
-
-  if (testedWords.has(word.toLowerCase())) {
-    document.getElementById('test-result').innerText = "⚠️ Esta palavra já foi testada!";
-    return;
-  }
-
-  testedWords.add(word.toLowerCase());
-  attempts++;
-  const passes = currentRule.validate(word);
-
-  const resBox = document.getElementById('test-result');
-  const history = document.getElementById('list-history');
-  const li = document.createElement('li');
-
-  if (passes) {
-    points += 10;
-    bossShieldHits++;
-    resBox.innerText = "✅ PODE ENTRAR! (+10 pts)";
-    resBox.style.color = "var(--accent-color)";
-    li.innerText = `✅ ${word}`;
-  } else {
-    resBox.innerText = "👻 NÃO PODE ENTRAR!";
-    resBox.style.color = "var(--danger-color)";
-    li.innerText = `❌ ${word}`;
-  }
-
-  history.prepend(li);
-  input.value = '';
-  updateUI();
-}
-
-function guessRule() {
-  const input = document.getElementById('input-rule');
-  const text = input.value.trim().toLowerCase();
-
-  if (currentRule.boss && bossShieldHits < currentRule.shield) {
-    alert(`🛡️ O Escudo do Chefe exige mais ${currentRule.shield - bossShieldHits} acerto(s) antes de tentares a resposta!`);
-    return;
-  }
-
-  const isCorrect = currentRule.keys.some(k => text.includes(k)) && !currentRule.forbidden.some(k => text.includes(k));
-
-  if (isCorrect) {
-    clearInterval(timerInterval);
-    points += 50;
-    solvedRules.add(currentRule.id);
-    levelProgress[currentLevel]++;
-
-    if (points > currentUser.maxScore) {
-      currentUser.maxScore = points;
-      localStorage.setItem('halloween_user', JSON.stringify(currentUser));
-      saveToRanking(currentUser.name, currentUser.userClass, currentUser.maxScore);
-    }
-
-    const modal = document.getElementById('modal-victory');
-    document.getElementById('victory-message').innerText = `Decifraste a regra!\nPontuação: ${points} pts`;
-    modal.classList.add('active');
-  } else {
-    lives--;
-    points = Math.max(0, points - 15);
-    alert(`👻 Resposta Errada! Perdes-te 1 vida. (Vidas restantes: ${lives})`);
-    if (lives <= 0) {
-      clearInterval(timerInterval);
-      alert("💀 Ficaste sem vidas! Tenta novamente.");
-      showScreen('screen-levels');
-    }
-  }
-  updateUI();
-}
-
-function nextAction() {
-  document.getElementById('modal-victory').classList.remove('active');
-  updateLevelMenu();
-  showScreen('screen-levels');
-}
-
-function getHint() {
-  if (points >= 15) {
-    points -= 15;
-    alert(`💡 DICA: ${currentRule.hint}`);
-    updateUI();
-  } else {
-    alert("Precisas de pelo menos 15 pontos para pedir uma dica!");
-  }
-}
-
-function updateUI() {
-  document.getElementById('val-points').innerText = points;
-  document.getElementById('val-lives').innerText = lives;
-  if (currentRule && currentRule.boss) {
-    document.getElementById('val-boss-shield').innerText = `${bossShieldHits}/${currentRule.shield}`;
-  }
-}
-
-// --- RANKING DA ESCOLA (LocalStorage) ---
-function saveToRanking(name, userClass, score) {
-  let ranking = JSON.parse(localStorage.getItem('halloween_ranking') || '[]');
-  const existing = ranking.findIndex(r => r.name === name && r.userClass === userClass);
-
-  if (existing >= 0) {
-    ranking[existing].score = Math.max(ranking[existing].score, score);
-  } else {
-    ranking.push({ name, userClass, score });
-  }
-
-  ranking.sort((a, b) => b.score - a.score);
-  localStorage.setItem('halloween_ranking', JSON.stringify(ranking.slice(0, 10)));
-}
-
-function showRanking() {
-  const ranking = JSON.parse(localStorage.getItem('halloween_ranking') || '[]');
-  const list = document.getElementById('ranking-list');
-  list.innerHTML = '';
-
-  if (ranking.length === 0) {
-    list.innerHTML = '<li>Nenhum registo ainda. Sê o primeiro!</li>';
-  } else {
-    ranking.forEach(r => {
-      const li = document.createElement('li');
-      li.innerText = `${r.name} (${r.userClass}) - ${r.score} pts`;
-      list.appendChild(li);
-    });
-  }
-
-  document.getElementById('modal-ranking').classList.add('active');
+  .header-bar h1 { font-size: 16px !important; }
+  .header-bar p { font-size: 11px !important; }
+  .header-bar button { height: 36px !important; font-size: 11px !important; }
 }
