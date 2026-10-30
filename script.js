@@ -1,4 +1,3 @@
-// PALAVRA-PASSE DE ADMINISTRAÇÃO PARA ELIMINAR REGISTOS
 const ADMIN_PASSWORD = "1234";
 
 function switchMobileTab(tabId, btn) {
@@ -8,7 +7,6 @@ function switchMobileTab(tabId, btn) {
   btn.classList.add('active');
 }
 
-// GESTÃO DE LOCALSTORAGE E RANKING
 let player = { name: "", userClass: "", points: 0, wins: 0, bestScore: 0 };
 let rankingData = [];
 
@@ -52,7 +50,7 @@ function renderRankingTables() {
     rankingData = JSON.parse(savedRanking);
   }
 
-  // 1. Tabela Visível no Menu Principal (Mostra todos os registos)
+  // 1. Tabela Visível no Menu
   let menuTbody = document.getElementById('menu-ranking-table-body');
   if (menuTbody) {
     menuTbody.innerHTML = '';
@@ -76,7 +74,7 @@ function renderRankingTables() {
     }
   }
 
-  // 2. Tabela na Janela Modal (Com opção de apagar por senha)
+  // 2. Tabela Modal com eliminação
   let modalTbody = document.getElementById('modal-ranking-table-body');
   if (modalTbody) {
     modalTbody.innerHTML = '';
@@ -102,7 +100,6 @@ function renderRankingTables() {
   }
 }
 
-// ELIMINAR REGISTO ÚNICO
 function deleteSingleRecord(index) {
   let pwd = prompt("🔒 Palavra-passe do Professor para eliminar este registo:");
   if (pwd === ADMIN_PASSWORD) {
@@ -115,7 +112,6 @@ function deleteSingleRecord(index) {
   }
 }
 
-// ELIMINAR TODOS OS REGISTOS
 document.getElementById('btn-clear-all-ranking').addEventListener('click', () => {
   let pwd = prompt("🔒 Palavra-passe do Professor para APAGAR TODO O RANKING:");
   if (pwd === ADMIN_PASSWORD) {
@@ -173,31 +169,22 @@ let achievements = [
 ];
 
 const rulesDB = [
-  // NÍVEL 1
   { id: "n1_tunel", level: 1, title: "👻 Túnel Invisível", desc: "Apenas certas palavras passam pela névoa...", examples: ["Avião     ->  Passa", "Mota      ->  Não Passa", "Abóbora   ->  Passa", "Vampiro   ->  Não Passa", "Café      ->  Passa", "Morcego   ->  Não Passa", "Chá       ->  Passa", "Sombra    ->  Não Passa"], validate: p => /[áéíóúàâêôãõ]/i.test(p), keys: ["acent", "til"], forbidden: ["sem acent", "não tem"], d1: "Nota as marcas nas letras.", d2: "Há acentos ou tildes?", d3: "As palavras válidas têm acentuação." },
   { id: "n1_caldeirao", level: 1, title: "🧙‍♀️ Caldeirão da Bruxa", desc: "Oferendas com vogais no início alimentam a poção!", examples: ["Aranha    ->  Passa", "Morcego   ->  Não Passa", "Esqueleto ->  Passa", "Zumbi     ->  Não Passa", "Iglu      ->  Passa", "Pedra     ->  Não Passa", "Ovo       ->  Passa", "Caldeirão ->  Não Passa"], validate: p => /^[aeiouáéíóúãõâêô]/i.test(p), keys: ["vogal", "começa com v"], forbidden: ["consoante"], d1: "Repara na primeira letra.", d2: "Começa por A, E, I, O, U?", d3: "Começa por uma vogal." },
   { id: "n1_espelho", level: 1, title: "🪞 Espelho Mágico", desc: "O espelho reflete apenas poderes duplicados!", examples: ["Terra     ->  Passa", "Pedra     ->  Não Passa", "Garrafa   ->  Passa", "Copo      ->  Não Passa", "Passarinho->  Passa", "Sombra    ->  Não Passa", "Carro     ->  Passa", "Vento     ->  Não Passa"], validate: p => /(.)\1/i.test(p), keys: ["dupla", "repetida", "duas letras", "rr", "ss"], forbidden: ["diferentes"], d1: "Observa o centro das palavras.", d2: "Há duas letras iguais juntas?", d3: "Tem letras duplas consecutivas." },
   { id: "n1_gargula", level: 1, title: "👑 CHEFE: Gárgula Guardiã 🗿", desc: "Exige 2 testes válidos antes de decifrares a regra par!", examples: ["Gato      ->  Passa", "Bruxa     ->  Não Passa", "Lobo      ->  Passa", "Fantasma  ->  Não Passa", "Cova      ->  Passa", "Teia      ->  Passa", "Lua       ->  Não Passa", "Noite     ->  Não Passa"], validate: p => p.length % 2 === 0, keys: ["par", "pares"], forbidden: ["ímpar"], d1: "Conta as letras.", d2: "Divide-se por 2?", d3: "Número par de letras.", boss: true, shield: 2 },
-
-  // NÍVEL 2
   { id: "n2_uivo", level: 2, title: "🐺 O Uivo do Lobisomem", desc: "O uivo ecoa apenas com um som final específico!", examples: ["Monstro   ->  Passa", "Bruxa     ->  Não Passa", "Esqueleto ->  Passa", "Caveira   ->  Não Passa", "Vampiro   ->  Passa", "Magia     ->  Não Passa", "Fogo      ->  Passa", "Luz       ->  Não Passa"], validate: p => /o$/i.test(p), keys: ["termina com o", "fim o"], forbidden: ["começa"], d1: "Olha para a última letra.", d2: "Que vogal está no fim?", d3: "Termina com a letra 'O'." },
   { id: "n2_livro", level: 2, title: "📜 O Livro de Feitiços", desc: "Apenas palavras longas contêm conhecimento!", examples: ["Cemitério ->  Passa", "Lobo      ->  Não Passa", "Lobisomem ->  Passa", "Gato      ->  Não Passa", "Assombração-> Passa", "Lua       ->  Não Passa", "Escuridão ->  Passa", "Sol       ->  Não Passa"], validate: p => p.length >= 7, keys: ["grande", "7 letras", "comprida", "longa"], forbidden: ["curta"], d1: "Tamanho das palavras.", d2: "Quantas letras no mínimo?", d3: "Tem 7 ou mais letras." },
   { id: "n2_pacto", level: 2, title: "🩸 O Pacto de Sangue", desc: "Contêm o símbolo fundamental do ritual...", examples: ["Bruxa     ->  Passa", "Zumbi     ->  Não Passa", "Fantasma  ->  Passa", "Lobo      ->  Não Passa", "Aranha    ->  Passa", "Veneno    ->  Não Passa", "Altar     ->  Passa", "Sol       ->  Não Passa"], validate: p => /a/i.test(p), keys: ["tem a", "contem a", "letra a"], forbidden: ["sem a"], d1: "Procura por uma vogal comum.", d2: "A primeira letra do alfabeto?", d3: "Contém a letra 'A'." },
   { id: "n2_abobora", level: 2, title: "👑 CHEFE: Rei Abóbora 🎃", desc: "Exige 2 acertos no escudo antes de decifrares!", examples: ["Abóbora   ->  Passa", "Melão     ->  Não Passa", "Sombra    ->  Passa", "Luz       ->  Não Passa", "Cemitério ->  Passa", "Sol       ->  Não Passa", "Castelo   ->  Passa", "Dia       ->  Não Passa"], validate: p => p.length > 5 && /o/i.test(p), keys: ["letra o", "mais de 5"], forbidden: ["curta"], d1: "Tamanho + vogal específica.", d2: "Mais de 5 letras E a letra 'O'.", d3: "Palavra com >5 letras contendo 'O'.", boss: true, shield: 2 },
-
-  // NÍVEL 3
   { id: "n3_pocao", level: 3, title: "🧪 A Poção Encantada", desc: "Fervilha apenas com palavras ricas em vogais!", examples: ["Abóbora (4)-> Passa", "Sal (1)   ->  Não Passa", "Cemitério(5)->Passa", "Cova (2)  ->  Não Passa", "Fantasma(3)-> Não Passa", "Lobisomem(4)->Passa", "Vampiro (3)-> Não Passa", "Assombração(5)->Passa"], validate: p => (p.match(/[aeiouáéíóúãõâêô]/gi) || []).length >= 4, keys: ["vogais", "4 vogais"], forbidden: ["consoante"], d1: "Conta as vogais.", d2: "Quantas no mínimo?", d3: "Pelo menos 4 vogais." },
   { id: "n3_teia", level: 3, title: "🕸️ A Teia Dupla", desc: "Apenas palavras conectadas tecem a teia!", examples: ["Sexta-Feira -> Passa", "Sábado     -> Não Passa", "Pára-Raios  -> Passa", "Tempestade  -> Não Passa", "Beija-Flor  -> Passa", "Vento     -> Não Passa", "Arco-Íris   -> Passa", "Chuva     -> Não Passa"], validate: p => p.includes("-"), keys: ["hifen", "traco", "composta"], forbidden: ["simples"], d1: "Símbolo de ligação.", d2: "Há um hífen?", d3: "Contém hífen (-)." },
   { id: "n3_velas", level: 3, title: "🕯️ A Dança das Velas", desc: "A chama pisca para um ritmo final suave...", examples: ["Bruxa     ->  Passa", "Monstro   ->  Não Passa", "Caveira   ->  Passa", "Vampiro   ->  Não Passa", "Magia     ->  Passa", "Fogo      ->  Não Passa", "Sombra    ->  Não Passa", "Vela      ->  Passa"], validate: p => /a$/i.test(p), keys: ["termina com a", "fim a"], forbidden: ["começa"], d1: "Última letra.", d2: "Termina em qual vogal?", d3: "Termina com a letra 'A'." },
   { id: "n3_dracula", level: 3, title: "👑 CHEFE: Conde Drácula 🧛‍♂️", desc: "Exige 3 acertos seguidos antes de aceitar a resposta!", examples: ["Noite     ->  Passa", "Dia       ->  Não Passa", "Sangue    ->  Passa", "Sol       ->  Não Passa", "Morcego   ->  Passa", "Luz       ->  Não Passa", "Castelo   ->  Passa", "Ar        ->  Não Passa"], validate: p => p.length >= 5 && /[aeiouáéíóú]$/i.test(p), keys: ["5 letras", "termina em vogal"], forbidden: ["consoante"], d1: "Tamanho e letra final.", d2: "5+ letras E terminar em vogal.", d3: "5+ letras terminada em vogal.", boss: true, shield: 3 },
-
-  // NÍVEL 4
   { id: "n4_palindromo", level: 4, title: "🔄 O Palíndromo Assombrado", desc: "Lêem-se da mesma forma nos dois sentidos!", examples: ["Radar     ->  Passa", "Bruxa     ->  Não Passa", "Ovo       ->  Passa", "Vampiro   ->  Não Passa", "Arara     ->  Passa", "Monstro   ->  Não Passa", "Rotor     ->  Passa", "Sombra    ->  Não Passa"], validate: p => p.length > 1 && p.toLowerCase() === p.toLowerCase().split('').reverse().join(''), keys: ["palindromo", "igual de tras"], forbidden: ["diferente"], d1: "Lê ao contrário.", d2: "É idêntica dos dois lados?", d3: "É um palíndromo." },
   { id: "n4_ordem", level: 4, title: "🔤 A Ordem Alfabética Secreta", desc: "Letras em ordem alfabética estrita!", examples: ["Amo      ->  Passa", "Bio       ->  Passa", "Luz       ->  Não Passa", "Amor      ->  Não Passa", "Dos       ->  Passa", "Cova      ->  Não Passa", "Gil       ->  Passa", "Sol       ->  Não Passa"], validate: p => { let s = p.toLowerCase(); if (s.length < 2) return false; for (let i=0; i<s.length-1; i++) if (s[i] > s[i+1]) return false; return true; }, keys: ["ordem alfabetica", "crescente"], forbidden: ["desordem"], d1: "Sequência no alfabeto.", d2: "Cada letra vem depois da anterior?", d3: "Ordem alfabética crescente." },
   { id: "n4_eco", level: 4, title: "⚡ O Eco Consoante", desc: "Começam e terminam pela mesma consoante!", examples: ["Radar     ->  Passa", "Cova      ->  Não Passa", "Testar    ->  Passa", "Motor     ->  Passa", "Nível     ->  Passa", "Sombra    ->  Não Passa", "Ventar    ->  Passa", "Bruxa     ->  Não Passa"], validate: p => { let s = p.toLowerCase(); if (s.length < 2) return false; let ini = s[0], fim = s[s.length-1]; return ini === fim && !/[aeiouáéíóúãõâêô]/i.test(ini); }, keys: ["mesma consoante", "comeca e termina igual"], forbidden: ["vogal"], d1: "Primeira e última letra.", d2: "Consoantes iguais?", d3: "Começa e termina com a mesma consoante." },
   { id: "n4_cavaleiro", level: 4, title: "👑 CHEFE: O Cavaleiro Sem Cabeça 🐎", desc: "Exige 3 acertos para aceitar o segredo do 3!", examples: ["Morcego (3)-> Passa", "Gato (2)   -> Não Passa", "Fantasma(3)-> Passa", "Abóbora (4)-> Não Passa", "Caveira (4)-> Não Passa", "Vampiro (3)-> Passa", "Bruxa (2)  -> Não Passa", "Cemitério(5)-> Não Passa"], validate: p => (p.match(/[aeiouáéíóúãõâêô]/gi) || []).length === 3, keys: ["3 vogais", "exatamente 3"], forbidden: ["4", "2"], d1: "Conta as vogais.", d2: "Exatamente três.", d3: "Contém exatamente 3 vogais.", boss: true, shield: 3 },
-
-  // NÍVEL 5
   { id: "n5_unicas", level: 5, title: "💎 O Anel das Vogais Únicas", desc: "NENHUMA vogal se repete!", examples: ["Noite     ->  Passa", "Batata    ->  Não Passa", "Morcego   ->  Passa", "Pedra     ->  Passa", "Caldeirão ->  Não Passa", "Lobo      ->  Passa", "Fantasma  ->  Não Passa", "Vampiro   ->  Passa"], validate: p => { let v = (p.toLowerCase().match(/[aeiouáéíóúãõâêô]/g) || []); return v.length > 0 && v.length === new Set(v).size; }, keys: ["sem repetir vogal", "vogais diferentes"], forbidden: ["repetida"], d1: "Há vogais repetidas?", d2: "Todas são diferentes?", d3: "Nenhuma vogal se repete." },
   { id: "n5_equilibradas", level: 5, title: "🌌 O Código dos Números Invisíveis", desc: "Número de consoantes é igual ao de vogais!", examples: ["Gato (2v,2c)-> Passa", "Sol (1v,2c) -> Não Passa", "Lobo (2v,2c)-> Passa", "Cova (2v,2c)-> Passa", "Bruxa (2v,3c)-> Não Passa", "Teia (3v,1c)-> Não Passa", "Rato (2v,2c)-> Passa", "Aranha (3v,3c)-> Passa"], validate: p => { let s = p.toLowerCase(); let v = (s.match(/[aeiouáéíóúãõâêô]/g) || []).length; let c = (s.match(/[bcdfghjklmnpqrstvwxyz]/g) || []).length; return v > 0 && v === c; }, keys: ["igual de vogais e consoantes"], forbidden: ["diferente"], d1: "Compara vogais e consoantes.", d2: "Quantidade igual?", d3: "Número de vogais = consoantes." },
   { id: "n5_fogo", level: 5, title: "🔥 O Selo do Fogo Ancestral", desc: "Apenas palavras com a letra 'Z' ou 'X'!", examples: ["Bruxa     ->  Passa", "Fantasma  ->  Não Passa", "Zumbi     ->  Passa", "Xadrez    ->  Passa", "Sombra    ->  Não Passa", "Xarope    ->  Passa", "Cova      ->  Não Passa", "Anpaz     ->  Passa"], validate: p => /[zx]/i.test(p), keys: ["letra z", "letra x", "tem z", "tem x"], forbidden: ["sem z"], d1: "Consoantes raras.", d2: "Contém Z ou X?", d3: "Tem a letra Z ou X." },
@@ -481,7 +468,7 @@ function testWord() {
     historyWords.push(`✅ ${word}`);
     playSound('success');
   } else {
-    res.innerText = "ghost NÃO PODE ENTRAR!";
+    res.innerText = "👻 NÃO PODE ENTRAR!";
     res.style.color = "var(--red-danger)";
     historyWords.push(`❌ ${word}`);
     if (examplesCount < currentRule.examples.length) examplesCount++;
