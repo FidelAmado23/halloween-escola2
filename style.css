@@ -1,207 +1,188 @@
 :root {
-  --bg-color: #090512;
-  --card-bg: #160B24;
-  --primary-color: #FF7518;
-  --secondary-color: #7B2CBF;
-  --accent-color: #39FF14;
-  --danger-color: #FF3131;
-  --text-color: #E2D4FF;
+  --bg-main: #090512;
+  --panel-bg: #160B24;
+  --purple-border: #7B2CBF;
+  --purple-dark: #3C096C;
+  --purple-bright: #9D4EDD;
+  --orange-halloween: #FF7518;
+  --gold-yellow: #FFD700;
+  --green-success: #39FF14;
+  --red-danger: #FF3131;
+  --pink-life: #FF3B6B;
+  --text-purple: #D8C7FF;
 }
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+* { 
+  box-sizing: border-box; 
+  margin: 0; 
+  padding: 0; 
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+  user-select: none; 
 }
 
 body {
-  background-color: var(--bg-color);
-  color: var(--text-color);
+  background-color: var(--bg-main);
+  color: var(--text-purple);
   min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
+  overflow-x: hidden;
+  position: relative;
+}
+
+canvas#bgCanvas {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 1;
+}
+
+.app-container {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 1180px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
   padding: 10px;
 }
 
-.screen {
-  display: none;
-  width: 100%;
-  max-width: 1000px;
+/* === PAINÉIS E ELEMENTOS BASE === */
+.gothic-panel {
+  background: var(--panel-bg);
+  border: 2px solid var(--purple-border);
+  border-radius: 14px;
+  box-shadow: 0 0 15px rgba(123, 44, 191, 0.4);
+  position: relative;
 }
 
-.screen.active {
-  display: block;
-}
-
-.card {
-  background: var(--card-bg);
-  border: 2px solid var(--secondary-color);
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 8px 32px rgba(123, 44, 191, 0.3);
-  text-align: center;
-}
-
-h1, h2, h3 {
-  color: var(--primary-color);
-  margin-bottom: 12px;
-}
-
-.subtitle {
-  color: #a66ae8;
-  margin-bottom: 24px;
-}
-
-.input-group {
-  margin-bottom: 16px;
-  text-align: left;
-}
-
-label {
-  display: block;
-  margin-bottom: 6px;
-  font-weight: bold;
-}
-
-input {
-  width: 100%;
-  padding: 12px;
-  border-radius: 8px;
-  border: 1px solid var(--secondary-color);
-  background: #0d0618;
-  color: #fff;
-  font-size: 16px;
-}
-
-.btn {
-  width: 100%;
-  padding: 14px;
-  border: none;
-  border-radius: 8px;
-  font-weight: bold;
-  font-size: 16px;
-  cursor: pointer;
-  transition: transform 0.2s, background 0.2s;
-  margin-top: 10px;
-}
-
-.btn:active { transform: scale(0.98); }
-.btn-primary { background: var(--primary-color); color: #000; }
-.btn-secondary { background: var(--secondary-color); color: #fff; }
-.btn-accent { background: #3c096c; color: var(--primary-color); border: 1px solid var(--secondary-color); }
-.btn-warning { background: #352d15; color: #ffd700; }
-.btn-small { width: auto; padding: 6px 12px; font-size: 14px; }
-
-/* NÍVEIS GRID */
-.levels-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 12px;
-  margin: 20px 0;
-}
-
-.btn-level {
-  padding: 16px;
+.btn-gothic {
   background: #241438;
-  border: 1px solid var(--secondary-color);
   color: #fff;
-  border-radius: 10px;
+  border: 1px solid var(--purple-bright);
+  border-radius: 8px;
+  font-weight: bold;
   cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+.btn-gothic:active { transform: scale(0.96); }
+.btn-orange { background: var(--orange-halloween); color: #16091D; border: none; }
+
+/* === TELA 0: REGISTO === */
+#screen-register {
+  width: 100%; min-height: 90vh;
+  display: flex; justify-content: center; align-items: center;
+}
+.register-card {
+  width: 100%; max-width: 420px; padding: 25px; text-align: center;
+}
+.register-card h1 { color: var(--orange-halloween); font-size: 22px; margin-bottom: 8px; }
+.input-field {
+  width: 100%; padding: 14px; margin-bottom: 12px; border-radius: 8px;
+  border: 1px solid var(--purple-border); background: #0B0612; color: #fff; font-size: 16px; text-align: center;
 }
 
-.btn-level.locked {
-  opacity: 0.4;
-  cursor: not-allowed;
+/* === TELA 1: MENU === */
+#screen-menu { width: 100%; min-height: 90vh; display: none; flex-direction: column; justify-content: space-between; gap: 15px; }
+.menu-header { text-align: center; padding: 5px; }
+.menu-header h1 { font-size: 26px; color: var(--orange-halloween); text-shadow: 0 0 10px #ff7518; }
+.menu-body { display: flex; gap: 15px; flex: 1; }
+.adventure-card { flex: 1.2; padding: 18px; display: flex; flex-direction: column; justify-content: space-between; }
+.levels-card { flex: 1; padding: 15px; display: flex; flex-direction: column; }
+.ranking-side-card { flex: 1.1; padding: 15px; display: flex; flex-direction: column; }
+
+.levels-list { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; overflow-y: auto; }
+.btn-level { padding: 12px; font-size: 13px; text-align: center; }
+.btn-level.selected { border: 2px solid var(--orange-halloween); background: #7B2CBF; }
+.btn-level.locked { opacity: 0.4; border-color: #3D2446; background: #140A1A; cursor: not-allowed; }
+
+/* === TELA 2: JOGO RESPONSIVO === */
+#screen-game { width: 100%; display: none; flex-direction: column; gap: 12px; }
+.header-bar { padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; }
+
+.game-layout { display: flex; gap: 15px; width: 100%; }
+.col-panel { padding: 15px; display: flex; flex-direction: column; justify-content: space-between; flex: 1; }
+
+/* ABAS MOBILE (OCULTAS NO PC) */
+.mobile-tabs { display: none; gap: 6px; width: 100%; }
+.tab-btn { flex: 1; padding: 12px 5px; background: #160B24; border: 1px solid var(--purple-border); color: #fff; border-radius: 8px; font-weight: bold; font-size: 13px; text-align: center; }
+.tab-btn.active { background: var(--purple-border); color: var(--gold-yellow); border-color: var(--gold-yellow); }
+
+.examples-box {
+  background: #0D0618; border: 1px solid var(--purple-border); border-radius: 8px;
+  padding: 12px; font-family: 'Consolas', monospace; font-size: 13px; color: #E2D4FF;
+  min-height: 200px; max-height: 350px; white-space: pre-wrap; overflow-y: auto; line-height: 1.5; margin-bottom: 10px;
 }
 
-/* TELA DE JOGO RESPONSIVA */
-.game-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
+.result-display {
+  min-height: 55px; background: #0B0612; border: 1px solid var(--purple-border);
+  border-radius: 6px; display: flex; justify-content: center; align-items: center;
+  font-weight: bold; font-size: 13px; color: #fff; text-align: center; margin: 10px 0; padding: 8px;
 }
 
-.game-body {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 16px;
+.bar-bg { width: 100%; height: 8px; background: #35152D; border-radius: 4px; overflow: hidden; margin-top: 3px; }
+.bar-fill { height: 100%; width: 100%; transition: width 0.3s; }
+
+.inventory-container { display: flex; gap: 6px; margin: 10px 0; }
+.btn-item { flex: 1; height: 44px; font-size: 13px; font-weight: bold; }
+
+.history-box {
+  font-family: 'Consolas', monospace; font-size: 12px; color: var(--text-purple);
+  min-height: 140px; overflow-y: auto; white-space: pre-wrap; margin-top: 8px;
 }
 
-.panel {
-  background: var(--card-bg);
-  border: 1px solid var(--secondary-color);
-  border-radius: 12px;
-  padding: 16px;
+/* OVERLAYS / POPUPS */
+#victory-container, #ranking-modal {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(9, 5, 18, 0.95);
+  display: none; flex-direction: column; justify-content: center; align-items: center;
+  padding: 20px; z-index: 100;
 }
 
-.input-inline {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 10px;
+.ranking-card {
+  width: 100%; max-width: 580px; max-height: 85vh; padding: 20px;
+  display: flex; flex-direction: column; gap: 15px; text-align: center;
 }
 
-.input-inline input { flex: 1; }
-.input-inline .btn { width: auto; margin-top: 0; }
-
-.result-box {
-  background: #0b0612;
-  padding: 12px;
-  border-radius: 8px;
-  text-align: center;
-  font-weight: bold;
-  min-height: 48px;
+.ranking-table-box {
+  overflow-y: auto; max-height: 300px; border: 1px solid var(--purple-border); border-radius: 8px; background: #0D0618;
 }
 
-.examples-list, .history-list {
-  list-style: none;
-  font-family: monospace;
-  max-height: 180px;
-  overflow-y: auto;
-  text-align: left;
-  margin-bottom: 10px;
+table.ranking-table {
+  width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;
+}
+table.ranking-table th, table.ranking-table td {
+  padding: 8px 10px; border-bottom: 1px solid #241438;
+}
+table.ranking-table th { background: var(--purple-dark); color: var(--gold-yellow); position: sticky; top: 0; z-index: 2; }
+
+.btn-delete-row {
+  background: none; border: none; color: var(--red-danger); cursor: pointer; font-size: 14px; padding: 2px 6px; border-radius: 4px;
+}
+.btn-delete-row:hover { background: rgba(255, 49, 49, 0.2); }
+
+#achievement-toast {
+  position: fixed; top: 15px; right: 15px; width: 280px; height: 55px;
+  background: #1E0F33; border: 2px solid var(--gold-yellow); border-radius: 10px;
+  display: none; justify-content: center; align-items: center; text-align: center;
+  color: var(--gold-yellow); font-weight: bold; font-size: 12px; z-index: 99;
 }
 
-.examples-list li, .history-list li {
-  padding: 4px 0;
-  border-bottom: 1px solid #241438;
-}
+/* === ADAPTAÇÃO TELEMÓVEIS === */
+@media (max-width: 850px) {
+  body { overflow-y: auto; align-items: flex-start; }
+  .app-container { min-height: 100vh; height: auto; padding: 5px; }
+  .menu-body { flex-direction: column; }
+  
+  .mobile-tabs { display: flex; }
 
-.badge-timer {
-  background: #ffc107;
-  color: #000;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-weight: bold;
-}
+  .game-layout { flex-direction: column; width: 100%; }
+  .col-panel { display: none; width: 100% !important; }
+  .col-panel.mobile-active { display: flex !important; }
 
-.boss-box {
-  background: #3a0d18;
-  color: var(--danger-color);
-  padding: 8px;
-  border-radius: 8px;
-  margin-bottom: 10px;
-  font-weight: bold;
-}
-
-/* MODAIS */
-.modal {
-  display: none;
-  position: fixed;
-  top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(0,0,0,0.85);
-  justify-content: center;
-  align-items: center;
-  padding: 20px;
-  z-index: 100;
-}
-
-.modal.active { display: flex; }
-
-.ranking-list {
-  text-align: left;
-  margin: 16px 0;
-  padding-left: 20px;
+  .header-bar h1 { font-size: 16px !important; }
+  .header-bar p { font-size: 11px !important; }
+  .header-bar button { height: 36px !important; font-size: 11px !important; }
 }
